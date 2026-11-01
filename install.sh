@@ -296,6 +296,11 @@ done
 sleep 2
 
 export APULSE_PLAYBACK_DEVICE=plug:default
+if grep -q "audio_metrics" /etc/asound.conf 2>/dev/null || [ "\$DEVICE_NAME" = "Yandex Station Lite 2" ] || echo "$DEVICE_NAME" | grep -qi "Lite 2"; then
+    CARD_NAME=\$(awk -F'[][]' '/^[ 0-9]/ {print \$2; exit}' /proc/asound/cards 2>/dev/null || true)
+    [ -n "\$CARD_NAME" ] || CARD_NAME="AMLAUGESOUND"
+    export APULSE_PLAYBACK_DEVICE="sysdefault:CARD=\$CARD_NAME"
+fi
 export APULSE_DIAG=0
 export CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
 export SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt

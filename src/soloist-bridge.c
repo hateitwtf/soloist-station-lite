@@ -1744,9 +1744,15 @@ void _start(void) {
                         unsigned long state_len = 0;
                         if (voice_state_payload(frame_body, frame_len, &state_payload, &state_len)) {
                             uint64_t alice_state = 0;
-                            if (find_field(state_payload, state_len, 1, 0, 0, 0, &alice_state) &&
-                                alice_state != 0 && now < cancel_alice_until_ms) {
-                                send_cancel_alice(quasar_fd);
+                            if (find_field(state_payload, state_len, 1, 0, 0, 0, &alice_state)) {
+                                if (alice_state == 1) {
+                                    // User said "Alice" (wake-word spotted): clear suppression window immediately
+                                    // so the dialog is not killed and user can speak.
+                                    cancel_alice_until_ms = 0;
+                                } else if ((alice_state == 2 || alice_state == 3) && now < cancel_alice_until_ms) {
+                                    // Suppress Alice cloud processing or TTS response from a hijacked Spotify command
+                                    send_cancel_alice(quasar_fd);
+                                }
                             }
                         }
                         const uint8_t *text_bytes = 0;
